@@ -2,22 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.user import Usuario, CriaUsuario, RespostaUsuario, AtualizaUsuario
 from app.config.database import get_db
-import bcrypt
+#from bcrypt import bcrypt
 
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
 
 #criptografa a senha
-def hash_password(senha: str) -> str:
-  salt = bcrypt.gensalt()
-  return bcrypt.hashpw(senha.encode(),salt).decode()
+#def hash_password(senha: str) -> str:
+ # salt = bcrypt.gensalt()
+#  return bcrypt.hashpw(senha.encode(),salt).decode()
 
 
 #cria usuario
 @router.post("/", response_model=RespostaUsuario)
 def cria_usuario(usuario: CriaUsuario, db: Session = Depends(get_db)):
   try:    #hash/criptografia da senha
-    hashed_password = hash_password(usuario.senha)
+   # hashed_password = hash_password(usuario.senha)
     
     required_fields = ['nome', 'email', 'senha']
     for fields in required_fields:
@@ -26,7 +26,7 @@ def cria_usuario(usuario: CriaUsuario, db: Session = Depends(get_db)):
     db_usuario = Usuario(
       nome = usuario.nome,
       email = usuario.email,
-      senha = hashed_password,
+      senha = usuario.senha,
       is_admin = usuario.is_admin
       )
     
@@ -35,13 +35,7 @@ def cria_usuario(usuario: CriaUsuario, db: Session = Depends(get_db)):
     db.refresh(db_usuario)
     
     return  RespostaUsuario.model_validate(db_usuario)
-     #RespostaUsuario(
-     # id_usuario=db_usuario.id_usuario,
-      #nome = db_usuario.nome,
-      #email = db_usuario.email,
-      #is_admin=db_usuario.is_admin,
-      ##s_active=db_usuario.is_active
-   ## )
+
   except Exception as e:
     raise HTTPException(status_code=500, detail=f"Erro ao criar usuario {str(e)}")
   
@@ -64,15 +58,10 @@ def atualiza_usuario(id_usuario: int, data_usuario: AtualizaUsuario, db: Session
     raise HTTPException(status_code=500, detail="Usuário não encontrado")
   
   #modifica apenas os dados que o usuario quiser/campos que o usuario fornece
-  #if data_usuario.nome is not None:
-   # db_usuario.nome == data_usuario.nome
- # if data_usuario.email is not None:
-  #  data_usuario.email = data_usuario.email
-  #if data_usuario.senha is not None:
-   # db_usuario.senha = hash_password(data_usuario.senha)
+
   db_usuario.nome = data_usuario.nome
   db_usuario.email = data_usuario.email
-  db_usuario.senha = hash_password(data_usuario.senha)
+  db_usuario.senha = data_usuario.senha
   
   db.commit()
   db.refresh(db_usuario)
